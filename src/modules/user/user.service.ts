@@ -9,7 +9,8 @@ import type { UpdateProfileDto } from './dto/update-profile.dto';
 import { User } from './entities/user.entity';
 
 /**
- * 用户服务�? * 处理用户相关的业务逻辑（使用模拟数据）
+ * 用户服务类
+ * 处理用户相关的业务逻辑（使用模拟数据）
  */
 @Injectable()
 export class UserService {
@@ -83,7 +84,8 @@ export class UserService {
   }
 
   /**
-   * 获取用户购买的课�?   */
+   * 获取用户购买的课程
+   */
   async getUserPurchasedCourses(userId: number): Promise<UserCourseProgress[]> {
     return await this.userCourseProgressRepository.find({
       where: { userId: userId, isPaid: true },

@@ -3,7 +3,7 @@ import { IsArray, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, IsUrl } fro
 
 /**
  * 创建用户DTO
- * 定义创建用户时需要的字段和验证规�? */
+ * 定义创建用户时需要的字段和验证规则 */
 export class CreateUserDto {
   @ApiProperty({
     description: '钱包地址',
@@ -14,7 +14,7 @@ export class CreateUserDto {
   walletAddress: string;
 
   @ApiProperty({
-    description: '用户�?,
+    description: '用户名',
     example: 'testuser',
     required: false,
   })
@@ -27,16 +27,16 @@ export class CreateUserDto {
     required: false,
   })
   @IsOptional()
-  @IsEmail({}, { message: '邮箱格式不正�? })
+  @IsEmail({}, { message: '邮箱格式不正确' })
   email?: string;
 
   @ApiProperty({
-    description: '是否是教�?,
+    description: '是否是讲师',
     example: false,
     required: false,
   })
   @IsOptional()
-  @IsEnum([true, false], { message: 'isInstructorRegistered必须是布尔�? })
+  @IsEnum([true, false], { message: 'isInstructorRegistered必须是布尔值' })
   isInstructorRegistered?: boolean = false;
 
   @ApiProperty({
@@ -50,12 +50,12 @@ export class CreateUserDto {
 
   // 讲师相关字段
   @ApiProperty({
-    description: '讲师简�?,
-    example: '资深区块链开发�?,
+    description: '讲师简介',
+    example: '资深区块链开发',
     required: false,
   })
   @IsOptional()
-  @IsString({ message: '简介必须是字符�? })
+  @IsString({ message: '简介必须是字符串' })
   bio?: string;
 
   @ApiProperty({
@@ -64,7 +64,7 @@ export class CreateUserDto {
     required: false,
   })
   @IsOptional()
-  @IsArray({ message: '专业领域必须是数�? })
+  @IsArray({ message: '专业领域必须是数组' })
   @IsString({ each: true, message: '专业领域数组中的每个元素必须是字符串' })
   specializations?: string[];
 }

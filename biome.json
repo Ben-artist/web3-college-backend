@@ -14,7 +14,15 @@
       "logs/**",
       ".git/**",
       "*.log",
-      "eslint.config.mjs"
+      "eslint.config.mjs",
+      "src/common/**",
+      "src/config/**",
+      "src/modules/certificate/**",
+      "src/modules/course/dto/**",
+      "src/modules/course/entities/**",
+      "src/modules/email/**",
+      "src/modules/performance/**",
+      "src/modules/storage/**"
     ]
   },
   "formatter": {

@@ -11,7 +11,8 @@ import type { User as UserEntity } from './entities/user.entity';
 import type { UserService } from './user.service';
 
 /**
- * 用户控制�? * 处理用户相关的HTTP请求
+ * 用户控制器
+ * 处理用户相关的HTTP请求
  */
 @ApiTags('用户管理')
 @ApiBearerAuth()
@@ -45,8 +46,8 @@ export class UserController {
     return this.userService.login(walletAddress);
   }
 
-  // 注册为讲�?  @Post('registerAsInstructor')
-  @ApiOperation({ summary: '注册为讲�? })
+  // 注册为讲师  @Post('registerAsInstructor')
+  @ApiOperation({ summary: '注册为讲师' })
   registerAsInstructor(
     @Body() registerUserDto: RegisterUserDto,
     @UserId() userId: number
@@ -58,7 +59,7 @@ export class UserController {
   @Get('profile')
   @ApiOperation({ summary: '获取用户信息' })
   @ApiResponse({ status: 200, description: '获取用户成功' })
-  @ApiResponse({ status: 500, description: '用户不存�? })
+  @ApiResponse({ status: 500, description: '用户不存在' })
   getProfile(@UserId() userId: number): Promise<UserEntity | null> {
     return this.userService.getUserById(userId);
   }
