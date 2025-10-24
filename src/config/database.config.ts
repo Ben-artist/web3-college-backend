@@ -2,7 +2,7 @@ import type { ConfigService } from '@nestjs/config';
 import type { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 /**
- * 数据库配置工厂函�? * 使用Supabase PostgreSQL连接（支持连接池�? */
+ * 数据库配置工厂函数 */
 export const createDatabaseConfig = (configService: ConfigService): TypeOrmModuleOptions => {
   // Supabase配置
   const supabaseUrl = configService.get<string>('DATABASE_URL');

@@ -3,7 +3,8 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } 
 import { Course } from '../../course/entities/course.entity';
 import { User } from '../../user/entities/user.entity';
 
-// nft 要与课程表关�?@Entity()
+// nft 要与课程表关
+@Entity('nft_certificates')
 @Index(['userId']) // 用户查询优化
 @Index(['courseId']) // 课程查询优化
 export class NFTCertificate extends CommonEntity {
@@ -22,7 +23,8 @@ export class NFTCertificate extends CommonEntity {
   @Column()
   userId: number;
 
-  // 钱包地址（冗余存储，方便直接查询�?  @Column()
+  // 钱包地址（冗余存储，方便直接查询） 
+   @Column()
   walletAddress: string;
 
   // 关联课程ID
@@ -41,10 +43,12 @@ export class NFTCertificate extends CommonEntity {
   @Column({ nullable: true })
   nftUrl: string;
 
-  // 铸造交易哈�?  @Column()
+  // 铸造交易哈希
+  @Column()
   transactionHash: string;
 
-  // 区块�?  @Column()
+  // 区块号
+  @Column()
   blockNumber: number;
 
   // 关联用户
@@ -58,7 +62,7 @@ export class NFTCertificate extends CommonEntity {
   // 关联课程
   @ManyToOne(
     () => Course,
-    (course) => course.certificates
+    (course) => course.certificates,
   )
   @JoinColumn({ name: 'courseId', referencedColumnName: 'courseId' })
   course: Course;

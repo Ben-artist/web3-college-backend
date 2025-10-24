@@ -2,9 +2,11 @@ import { z } from 'zod';
 
 // 环境变量校验Schema
 const envSchema = z.object({
-  // 数据库配置（必需�?  DATABASE_URL: z.url({ message: 'DATABASE_URL must be a valid URL' }),
+  // 数据库配置（必需）  
+  DATABASE_URL: z.url({ message: 'DATABASE_URL must be a valid URL' }),
 
-  // JWT配置（必需�?  JWT_SECRET: z.string().min(1, { message: 'JWT_SECRET 不能为空' }),
+  // JWT配置（必需）  
+  JWT_SECRET: z.string().min(1, { message: 'JWT_SECRET 不能为空' }),
 
   // 应用配置
   PORT: z

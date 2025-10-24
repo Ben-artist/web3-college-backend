@@ -17,7 +17,7 @@ import {
   GeneratePresignedUrlDto,
   PresignedUrlResponseDto,
 } from './dto/upload.dto';
-import type { S3Service } from './s3.service';
+import { S3Service } from './s3.service';
 
 @ApiTags('文件存储')
 @Controller('storage')

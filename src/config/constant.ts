@@ -17,13 +17,15 @@ export const IS_FREE = {
   FALSE: '0',
 };
 
-// 学习状�?export const LEARNING_STATUS = {
+// 学习状态
+export const LEARNING_STATUS = {
   NOT_STARTED: '1',
   IN_PROGRESS: '2',
   COMPLETED: '3',
 };
 
-// 章节状�?export const LESSON_STATUS = {
+// 章节状态
+export const LESSON_STATUS = {
   DRAFT: '1',
   PUBLISHED: '2',
   ARCHIVED: '3',

@@ -15,7 +15,6 @@ import { winstonConfig } from './config/winston.config';
 import { CertificateModule } from './modules/certificate/certificate.module';
 import { CourseModule } from './modules/course/course.module';
 import { EmailModule } from './modules/email/email.module';
-import { PerformanceModule } from './modules/performance/performance.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { UserModule } from './modules/user/user.module';
 /**
@@ -74,7 +73,6 @@ import { UserModule } from './modules/user/user.module';
     StorageModule,
     CertificateModule,
     EmailModule,
-    PerformanceModule,
   ],
 })
 export class AppModule implements NestModule {

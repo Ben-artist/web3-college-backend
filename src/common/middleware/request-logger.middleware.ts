@@ -1,6 +1,6 @@
 import { Injectable, type NestMiddleware } from '@nestjs/common';
 import type { NextFunction, Request, Response } from 'express';
-import type { AppLoggerService } from '../services/logger.service';
+import { AppLoggerService } from '../services/logger.service';
 
 @Injectable()
 export class RequestLoggerMiddleware implements NestMiddleware {
@@ -10,7 +10,8 @@ export class RequestLoggerMiddleware implements NestMiddleware {
     const { method, originalUrl, ip, headers, body } = req;
     const startTime = Date.now();
 
-    // 记录请求开�?    this.logger.log(`Request started: ${method} ${originalUrl} - ${ip}`, 'HTTP');
+    // 记录请求开始    
+    this.logger.log(`Request started: ${method} ${originalUrl} - ${ip}`, 'HTTP');
 
     res.on('finish', () => {
       const { statusCode } = res;

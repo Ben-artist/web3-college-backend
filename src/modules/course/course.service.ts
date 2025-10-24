@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, type Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import type { CreateCourseDto } from './dto/create-course.dto';
-import type { CreateLessonDto } from './dto/create-lesson.dto';
 import { Chapter } from './entities/chapter.entity';
 import { Course } from './entities/course.entity';
 import { UserCourseProgress } from './entities/user-course-progress.entity';

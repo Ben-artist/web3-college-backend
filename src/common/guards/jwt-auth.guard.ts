@@ -4,9 +4,9 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import type { ConfigService } from '@nestjs/config';
-import type { Reflector } from '@nestjs/core';
-import type { JwtService } from '@nestjs/jwt';
+import  { ConfigService } from '@nestjs/config';
+import  { Reflector } from '@nestjs/core';
+import  { JwtService } from '@nestjs/jwt';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 /**
@@ -22,7 +22,8 @@ export class JwtAuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // 检查是否有@Public()装饰�?    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+    // 检查是否有@Public()装饰器   
+     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);

@@ -1,8 +1,7 @@
 import { Body, Controller, Get, ParseIntPipe, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import type { CourseService } from './course.service';
+import { CourseService } from './course.service';
 import type { CreateCourseDto } from './dto/create-course.dto';
-import type { CreateLessonDto } from './dto/create-lesson.dto';
 import type { Chapter } from './entities/chapter.entity';
 import type { Course } from './entities/course.entity';
 import {

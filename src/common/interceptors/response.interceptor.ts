@@ -28,7 +28,8 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiResponse<T>
           return data;
         }
 
-        // 否则包装成标准格�?        return {
+        // 否则包装成标准格式        
+        return {
           success: true,
           data,
           message: 'Success',

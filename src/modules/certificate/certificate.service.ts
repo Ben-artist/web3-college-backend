@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import type { Repository } from 'typeorm';
 import { Course } from '../course/entities/course.entity';
-import type { StorachaStorageService } from '../storage/storage.service';
+import { StorachaStorageService } from '../storage/storage.service';
 import { User } from '../user/entities/user.entity';
 import { NFTCertificate } from './entities/nft-certificate.entity';
 

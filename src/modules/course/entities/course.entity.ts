@@ -7,7 +7,7 @@ import { Chapter } from './chapter.entity';
 
 /**
  * 课程实体 - 课程系列/集合
- * 包含多个章节的完整课�? */
+ * 包含多个章节的完整课�? */
 @Entity('courses')
 export class Course extends CommonEntity {
   @PrimaryGeneratedColumn()
@@ -24,8 +24,10 @@ export class Course extends CommonEntity {
 
   // 课程时长
   @Column({ name: 'total_duration', default: 0 })
-  totalDuration: number; // 总时长（分钟�?
-  // 课程状�?草稿 等待审核 已发�?已拒�?  @Column({ name: 'course_status', default: COURSE_STATUS.DRAFT })
+  totalDuration: number;
+
+  // 课程状态：草稿 等待审核 已发布 已拒绝  
+  @Column({ name: 'course_status', default: COURSE_STATUS.DRAFT })
   courseStatus: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
@@ -35,12 +37,13 @@ export class Course extends CommonEntity {
   @Column({ name: 'instructor_id' })
   instructorId: number;
 
-  // 讲师钱包地址（冗余存储，方便直接查询�?  @Column({ name: 'instructor_wallet', nullable: true })
+  // 讲师钱包地址（冗余存储，方便直接查询）  
+   @Column({ name: 'instructor_wallet', nullable: true })
   instructorWallet?: string;
 
   // 课程分类
   @Column({ type: 'json' })
-  categories: string[]; // �?"区块链基础"
+  categories: string[]; // "区块链基础"
 
   // 课程难度
   @Column({ default: COURSE_DIFFICULTY.BEGINNER })
@@ -73,7 +76,8 @@ export class Course extends CommonEntity {
   })
   instructor: User;
 
-  // 一个课程包含多个章�?  @OneToMany(
+  // 一个课程包含多个章节
+  @OneToMany(
     () => Chapter,
     (chapter) => chapter.course,
     { cascade: true }

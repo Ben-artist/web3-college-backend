@@ -46,24 +46,28 @@ export class UserCoursePurchase extends CommonEntity {
   @Column({ type: 'decimal', precision: 18, scale: 8 })
   amount: string;
 
-  // 支付状�?  @Column({
+  // 支付状态：pending 确认 失败 退款
+  @Column({
     type: 'enum',
     enum: ['pending', 'confirmed', 'failed', 'refunded'],
     default: 'pending',
   })
   status: 'pending' | 'confirmed' | 'failed' | 'refunded';
 
-  // 区块链交易哈�?  @Column({ name: 'transaction_hash', nullable: true })
+  // 区块链交易哈希
+  @Column({ name: 'transaction_hash', nullable: true })
   transactionHash?: string;
 
   // 支付时间
   @Column({ name: 'paid_at', nullable: true })
   paidAt?: Date;
 
-  // 退款时�?  @Column({ name: 'refunded_at', nullable: true })
+  // 退款时间  
+  @Column({ name: 'refunded_at', nullable: true })
   refundedAt?: Date;
 
-  // 退款交易哈�?  @Column({ name: 'refund_transaction_hash', nullable: true })
+  // 退款交易哈希
+  @Column({ name: 'refund_transaction_hash', nullable: true })
   refundTransactionHash?: string;
 
   // 备注

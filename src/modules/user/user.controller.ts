@@ -8,7 +8,7 @@ import type { UserCourseProgress } from '../course/entities/user-course-progress
 import type { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import type { User as UserEntity } from './entities/user.entity';
-import type { UserService } from './user.service';
+import { UserService } from './user.service';
 
 /**
  * 用户控制器

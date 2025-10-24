@@ -30,13 +30,13 @@ export function CreateCertificateApiDoc() {
       type: NFTCertificate,
     }),
     ApiResponse({ status: 404, description: '用户或课程不存在' }),
-    ApiResponse({ status: 400, description: '该用户已经拥有此课程的证�? })
+    ApiResponse({ status: 400, description: '该用户已经拥有此课程的证书' })
   );
 }
 
-export function getUserCertificatesApiDoc() {
+export function getUserNFTCertificatesApiDoc() {
   return applyDecorators(
-    ApiOperation({ summary: '获取用户的证书列�? }),
+    ApiOperation({ summary: '获取用户的证书列表' }),
     ApiQuery({
       name: 'walletAddress',
       required: true,
@@ -47,6 +47,6 @@ export function getUserCertificatesApiDoc() {
       description: '获取证书列表成功',
       type: [NFTCertificate],
     }),
-    ApiResponse({ status: 404, description: '用户不存�? })
+    ApiResponse({ status: 404, description: '用户不存在' })
   );
 }

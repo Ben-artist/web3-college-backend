@@ -24,7 +24,7 @@ import {
 } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import type { StorachaStorageService } from './storage.service';
+import { StorachaStorageService } from './storage.service';
 
 @ApiTags('文件上传')
 @UseGuards(JwtAuthGuard)
