@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Course } from '../course/entities/course.entity';
 import { UserCourseProgress } from '../course/entities/user-course-progress.entity';
@@ -11,7 +12,13 @@ import { UserService } from './user.service';
  * 管理用户相关的功能（包括学生和讲师）
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([User, UserCourseProgress, Course])],
+  imports: [
+    TypeOrmModule.forFeature([User, UserCourseProgress, Course]),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || 'your-secret-key',
+      signOptions: { expiresIn: '24h' },
+    }),
+  ],
   controllers: [UserController],
   providers: [UserService],
   exports: [UserService], // 导出服务，供其他模块使用
