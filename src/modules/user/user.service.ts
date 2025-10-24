@@ -9,7 +9,7 @@ import type { UpdateProfileDto } from './dto/update-profile.dto';
 import { User } from './entities/user.entity';
 
 /**
- * 用户服务�? * 处理用户相关的业务逻辑（使用模拟数据）
+ * 用户服务�? * 处理用户相关的业务逻辑（使用模拟数据）
  */
 @Injectable()
 export class UserService {
@@ -66,19 +66,14 @@ export class UserService {
     registerUserDto: RegisterUserDto,
     userId: number
   ): Promise<User | null> {
-    // �?token 中取得用户信�?    const { username, email, isInstructorRegistered, avatarUrl, bio, specializations } =
-      registerUserDto;
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException(`用户 ${userId} 不存在`);
     }
-    // 更新用户信息
-    user.username = username || user.username;
-    user.email = email || user.email;
-    user.isInstructorRegistered = isInstructorRegistered || user.isInstructorRegistered;
-    user.avatarUrl = avatarUrl || user.avatarUrl;
-    user.bio = bio || user.bio;
-    user.specializations = specializations || user.specializations;
+
+    // 使用 Object.assign 合并属性，只更新提供的字段
+    Object.assign(user, registerUserDto);
+
     await this.userRepository.save(user);
     return user;
   }
@@ -88,7 +83,7 @@ export class UserService {
   }
 
   /**
-   * 获取用户购买的课�?   */
+   * 获取用户购买的课�?   */
   async getUserPurchasedCourses(userId: number): Promise<UserCourseProgress[]> {
     return await this.userCourseProgressRepository.find({
       where: { userId: userId, isPaid: true },
@@ -96,7 +91,8 @@ export class UserService {
     });
   }
 
-  // 用户已经完成的课�?  async getUserCompletedCoursesByUserId(userId: number): Promise<UserCourseProgress[]> {
+  // 用户已经完成的课程
+  async getUserCompletedCoursesByUserId(userId: number): Promise<UserCourseProgress[]> {
     return await this.userCourseProgressRepository.find({
       where: { userId: userId, isPaid: true, isCompleted: true },
       relations: ['course'],
@@ -107,18 +103,13 @@ export class UserService {
    * 更新用户资料
    */
   async updateProfile(updateProfileDto: UpdateProfileDto, userId: number): Promise<User> {
-    const { username, email, avatarUrl, bio, specializations } = updateProfileDto;
-
     const user = await this.getUserById(userId);
     if (!user) {
       throw new NotFoundException(`用户 ${userId} 不存在`);
     }
 
-    user.username = username || user.username;
-    user.email = email || user.email;
-    user.avatarUrl = avatarUrl || user.avatarUrl;
-    user.bio = bio || user.bio;
-    user.specializations = specializations || user.specializations;
+    // 手动合并属性，只更新提供的字段
+    Object.assign(user, updateProfileDto);
 
     return await this.userRepository.save(user);
   }

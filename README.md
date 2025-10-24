@@ -330,7 +330,67 @@ Course (1) ←→ (N) NFTCertificate
 5. **灵活的权限管理**：支持多角色和权限控制
 6. **数据完整性**：使用合适的数据类型和约束
 
+## 代码质量与开发工具
+
+### 🔧 代码格式化与检查工具
+
+项目使用 **Biome** 作为代码格式化和检查工具，配合 **Husky** 和 **lint-staged** 实现自动化代码质量保证。
+
+#### 配置说明
+
+1. **Biome 配置** (`biome.json`)：
+   - 自动格式化：缩进2空格，行宽100字符
+   - 自动修复：启用所有推荐规则和自动修复
+   - 文件类型：支持 TypeScript、JavaScript、JSON、Markdown
+   - 忽略文件：`node_modules`、`dist`、`coverage`、`logs` 等
+
+2. **Husky Git Hooks**：
+   - **pre-commit**：提交前自动运行代码检查和格式化
+   - **pre-push**：推送前运行测试和类型检查
+
+3. **lint-staged 配置**：
+   - TypeScript/JavaScript 文件：格式化 + 检查 + 自动修复
+   - JSON/Markdown 文件：格式化
+
+#### 使用方法
+
+```bash
+# 手动格式化所有文件
+pnpm run format
+
+# 检查代码问题
+pnpm run check
+
+# 自动修复无风险错误
+pnpm run check:fix
+
+# 提交时自动运行（已配置）
+git commit -m "your message"
+```
+
+#### 自动修复功能
+
+在 commit 时会自动：
+- ✅ 格式化代码（缩进、换行、引号等）
+- ✅ 修复无风险的 lint 错误
+- ✅ 整理 import 语句
+- ✅ 修复代码风格问题
+
+#### 注意事项
+
+- 提交时会自动修复无风险错误，无需手动处理
+- 如果有高风险错误，commit 会失败并提示需要手动修复
+- 所有修改的文件都会在 commit 前自动格式化
+
 ## 更新日志
+
+### v1.4.0 (2024-01-15)
+
+- ✅ 配置 Biome 代码格式化和检查工具
+- ✅ 优化 Husky Git Hooks 配置
+- ✅ 实现 commit 时自动格式化和错误修复
+- ✅ 修复 TypeScript 类型安全问题
+- ✅ 添加代码质量自动化流程
 
 ### v1.3.0 (2024-01-15)
 
