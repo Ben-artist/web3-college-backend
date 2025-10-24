@@ -20,7 +20,7 @@ export class CreateCourseDto {
 
   @ApiProperty({
     description: '课程标题',
-    example: 'Web3区块链开发入�?,
+    example: 'Web3区块链开发入门',
   })
   @IsNotEmpty({ message: '课程标题不能为空' })
   @IsString({ message: '课程标题必须是字符串' })
@@ -28,7 +28,7 @@ export class CreateCourseDto {
 
   @ApiProperty({
     description: '课程描述',
-    example: '从零开始学习Web3和区块链开发技�?,
+    example: '从零开始学习Web3和区块链开发技术',
   })
   @IsNotEmpty({ message: '课程描述不能为空' })
   @IsString({ message: '课程描述必须是字符串' })
@@ -48,7 +48,7 @@ export class CreateCourseDto {
     example: ['区块链基础', 'Web3', 'Solidity'],
   })
   @IsNotEmpty({ message: '课程分类不能为空' })
-  @IsArray({ message: '课程分类必须是数�? })
+  @IsArray({ message: '课程分类必须是数组' })
   @IsString({ each: true, message: '课程分类数组中的每个元素必须是字符串' })
   categories: string[];
 
@@ -64,12 +64,12 @@ export class CreateCourseDto {
   difficulty: string;
 
   @ApiProperty({
-    description: 'YD币价�?,
+    description: 'YD币价格',
     example: '100',
     required: false,
   })
   @IsOptional()
-  @IsString({ message: 'YD币价格必须是字符�? })
+  @IsString({ message: 'YD币价格必须是字符串' })
   price?: string;
 
   @ApiProperty({
@@ -78,7 +78,7 @@ export class CreateCourseDto {
     required: false,
   })
   @IsOptional()
-  @IsNumber({}, { message: '课程时长必须是数�? })
+  @IsNumber({}, { message: '课程时长必须是数字' })
   duration?: number;
 
   @ApiProperty({
@@ -88,36 +88,36 @@ export class CreateCourseDto {
   })
   @IsOptional()
   @IsString({ message: '是否免费必须是字符串' })
-  @IsEnum(Object.values(IS_FREE), { message: '是否免费必须�?�?' })
+  @IsEnum(Object.values(IS_FREE), { message: '是否免费必须是true或false' })
   isFree?: string;
 
   @ApiProperty({
     description: '课程标签',
-    example: ['区块�?, 'Web3', 'Solidity'],
+    example: ['区块链', 'Web3', 'Solidity'],
     required: false,
   })
   @IsOptional()
-  @IsArray({ message: '课程标签必须是数�? })
+  @IsArray({ message: '课程标签必须是数组' })
   @IsString({ each: true, message: '课程标签数组中的每个元素必须是字符串' })
   tags?: string[];
 
   @ApiProperty({
     description: '学习目标',
-    example: ['掌握Solidity基础', '能够开发智能合�?],
+    example: ['掌握Solidity基础', '能够开发智能合约'],
     required: false,
   })
   @IsOptional()
-  @IsArray({ message: '学习目标必须是数�? })
+  @IsArray({ message: '学习目标必须是数组' })
   @IsString({ each: true, message: '学习目标数组中的每个元素必须是字符串' })
   learningObjectives?: string[];
 
   @ApiProperty({
     description: '前置要求',
-    example: ['JavaScript基础', '区块链概�?],
+    example: ['JavaScript基础', '区块链概述'],
     required: false,
   })
   @IsOptional()
-  @IsArray({ message: '前置要求必须是数�? })
+  @IsArray({ message: '前置要求必须是数组' })
   @IsString({ each: true, message: '前置要求数组中的每个元素必须是字符串' })
   prerequisites?: string[];
 }
