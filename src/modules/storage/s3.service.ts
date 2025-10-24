@@ -30,11 +30,12 @@ export class S3Service {
       //   throw new BadRequestException(`文件大小超过限制: ${s3Config.maxFileSize} bytes`);
       // }
 
-      // 生成唯一文件�?      const fileExtension = path.extname(file.originalname);
+      // 生成唯一文件名
+      const fileExtension = path.extname(file.originalname);
       const fileName = `${crypto.randomUUID()}${fileExtension}`;
       const key = `${s3Config.uploadPrefix}${fileName}`;
 
-      // 上传�?S3
+      // 上传�?S3
       const command = new PutObjectCommand({
         Bucket: s3Config.bucketName,
         Key: key,
@@ -60,44 +61,5 @@ export class S3Service {
     } catch (error) {
       throw new InternalServerErrorException(`文件上传失败: ${error.message}`);
     }
-  }
-
-  async deleteFile(key: string): Promise<void> {
-    try {
-      const command = new DeleteObjectCommand({
-        Bucket: s3Config.bucketName,
-        Key: key,
-      });
-
-      await this.s3Client.send(command);
-    } catch (error) {
-      throw new InternalServerErrorException(`文件删除失败: ${error.message}`);
-    }
-  }
-
-  async getPresignedUrl(key: string, expiresIn = 3600): Promise<PresignedUrlResponseDto> {
-    try {
-      const command = new GetObjectCommand({
-        Bucket: s3Config.bucketName,
-        Key: key,
-      });
-
-      const presignedUrl = await getSignedUrl(this.s3Client, command, {
-        expiresIn,
-      });
-
-      return {
-        uploadUrl: presignedUrl,
-        fileUrl: `https://${s3Config.bucketName}.s3.${s3Config.region}.amazonaws.com/${key}`,
-        key,
-        expiresIn,
-      };
-    } catch (error) {
-      throw new InternalServerErrorException(`生成预签名URL失败: ${error.message}`);
-    }
-  }
-
-  async getFileUrl(key: string): Promise<string> {
-    return `https://${s3Config.bucketName}.s3.${s3Config.region}.amazonaws.com/${key}`;
   }
 }

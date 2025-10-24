@@ -122,7 +122,7 @@ export class PresignedUrlResponseDto {
   key: string;
 
   @ApiProperty({
-    description: '过期时间（秒�?,
+    description: '过期时间（秒）',
     example: 3600,
   })
   expiresIn: number;

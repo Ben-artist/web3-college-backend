@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import type { ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class StorachaStorageService {
   private readonly logger = new Logger(StorachaStorageService.name);
@@ -24,7 +24,7 @@ export class StorachaStorageService {
 
   /**
    *
-   * 上传�?Pinata IPFS @see https://docs.pinata.cloud/api-reference/endpoint/upload-a-file#body-group-id
+   * 上传�?Pinata IPFS @see https://docs.pinata.cloud/api-reference/endpoint/upload-a-file#body-group-id
    */
   async uploadToPinata(file: Buffer, filename: string) {
     try {
@@ -55,7 +55,7 @@ export class StorachaStorageService {
       return {
         cid,
         filename,
-        gatewayUrl: `https://${gatewayDomain}/ipfs/${cid}`, // 主网�?        uploadedAt: new Date().toISOString(),
+        gatewayUrl: `https://${gatewayDomain}/ipfs/${cid}`, // 主网�?        uploadedAt: new Date().toISOString(),
       };
     } catch (error) {
       this.logger.error(`Pinata upload error for ${filename}:`, error.stack);
@@ -66,7 +66,7 @@ export class StorachaStorageService {
   /**
    * 列出已上传的文件 @see https://docs.pinata.cloud/api-reference/endpoint/list-files#parameter-page-token
    * @param limit 限制数量
-   * @param offset 偏移�?   * @returns 文件列表
+   * @param offset 偏移�?   * @returns 文件列表
    */
   async listFiles(limit: number, offset: number) {
     try {
@@ -108,11 +108,11 @@ export class StorachaStorageService {
   /**
    * @see https://docs.pinata.cloud/api-reference/endpoint/get-file-by-id
    * 获取文件信息
-   * @param cid 内容标识�?   * @returns 文件信息
+   * @param cid 内容标识�?   * @returns 文件信息
    */
   async getFileInfo(fileId: string) {
     try {
-      // 验证文件是否存在�?Pinata
+      // 验证文件是否存在�?Pinata
       const response = await fetch(`${this.pinataFileUrl}/public/${fileId}`, {
         method: 'GET',
         headers: {
@@ -134,7 +134,7 @@ export class StorachaStorageService {
   }
 
   /** @see https://docs.pinata.cloud/api-reference/endpoint/delete-file-by-id
-   * 删除文件（从 Pinata 取消固定�?   * @param file_id 文件id
+   * 删除文件（从 Pinata 取消固定�?   * @param file_id 文件id
    */
   async deleteFile(fileId: string) {
     try {
