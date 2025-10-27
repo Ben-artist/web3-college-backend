@@ -1,8 +1,7 @@
-import { Body, Controller, Get, ParseIntPipe, Post, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CourseService } from './course.service';
-import type { CreateCourseDto } from './dto/create-course.dto';
-import type { Chapter } from './entities/chapter.entity';
+import { CreateCourseDto } from './dto/create-course.dto';
 import type { Course } from './entities/course.entity';
 import {
   CreateApiDoc,
@@ -12,18 +11,22 @@ import {
   getMyCoursesApiDoc,
   rateDoc,
 } from './swagger-doc';
-import { CreateChapterDto } from './dto/create-chapter.dto';
-
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { User } from '../user/entities/user.entity';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { SearchCourseDto } from './dto/search-course.dto';
 @ApiTags('课程管理')
-// @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('courses')
 export class CourseController {
-  constructor(private readonly courseService: CourseService) {}
+  constructor(private readonly courseService: CourseService) { }
 
   @Post('create')
   @CreateApiDoc()
-  async create(@Body() createCourseDto: CreateCourseDto): Promise<Course> {
-    return await this.courseService.create(createCourseDto);
+  async create(@Body() createCourseDto: CreateCourseDto,
+    @CurrentUser() user: User
+  ):Promise<Course | {success:boolean,message:string,data:null}> {
+    return await this.courseService.create(createCourseDto, user);
   }
 
   @Get('my')
@@ -36,29 +39,20 @@ export class CourseController {
     return await this.courseService.getUserCourses(walletAddress, page, limit);
   }
 
+  // 价格排序
+  // 评分排序
+  // 日期排序
+  // 关键词搜索
   @Post('list')
   @findAllApiDoc()
-  async findAll(
-    @Body('page') page = 1,
-    @Body('limit') limit = 10,
-    @Body('categories') categories?: string[],
-    @Body('free') free?: string,
-    @Body('priceRange') priceRange?: string[],
-    @Body('keyword') keyword?: string
+  async findAll( @Body() searchCourseDto: SearchCourseDto
   ): Promise<Course[]> {
-    return await this.courseService.findAll({
-      categories,
-      free,
-      priceRange,
-      page,
-      limit,
-      keyword,
-    });
+    return await this.courseService.findAll(searchCourseDto);
   }
 
   @Get('detail')
   @findOneApiDoc()
-  async findOne(@Query('courseId', ParseIntPipe) courseId: number): Promise<Course> {
+  async findOne(@Query('courseId', ParseIntPipe) courseId: number): Promise<{ course: Course, instructor: User }> {
     return await this.courseService.findOne(courseId);
   }
 
@@ -70,23 +64,5 @@ export class CourseController {
     @Body('rating') rating: number
   ): Promise<Course> {
     return await this.courseService.updateRating(courseId, walletAddress, rating);
-  }
-
-  @Post('chaptersCreate')
-  @createLessonApiDoc()
-  async createChapter(@Body() createChapterDto: CreateChapterDto): Promise<Chapter> {
-    return await this.courseService.createChapter(createChapterDto);
-  }
-
-  @Get('chaptersList')
-  @getMyCoursesApiDoc()
-  async getCourseChapters(@Query('courseId') courseId: number): Promise<Chapter[]> {
-    return await this.courseService.getCourseChapters(courseId);
-  }
-
-  @Get('chaptersDetail')
-  @createLessonApiDoc()
-  async getChapter(@Query('chapterId') chapterId: number): Promise<Chapter> {
-    return await this.courseService.findOneChapter(chapterId);
   }
 }

@@ -1,9 +1,10 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
-
+import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class EmailService {
-  constructor(private readonly mailerService: MailerService) {}
+  constructor(private readonly mailerService: MailerService, 
+    private readonly configService: ConfigService) { }
 
   // 格式化钱包地址显示
   private formatWalletAddress(walletAddress?: string): string {
@@ -14,17 +15,64 @@ export class EmailService {
   }
 
   // 通用发送邮件方法  
-  async sendEmail(to: string, subject: string, text: string, html?: string): Promise<void> {
-    await this.mailerService.sendMail({
+  async sendEmail(to: string, subject: string, text: string, html?: string): Promise<string | null> {
+    let result = await this.mailerService.sendMail({
       to,
       subject,
       text,
       html: html || text, // 如果没有HTML，使用纯文本
     });
+    if (result.messageId) {
+      return result.messageId;
+    } else {
+      return null;
+    }
+  }
+  // 发送验证码
+  async sendVerificationCode(to: string): Promise<string | null> {
+    // 保证始终为6位（如有前导0需要补足，比如000123）
+    const code = Math.floor(Math.random() * 1000000)
+      .toString()
+      .padStart(6, '0');
+     
+    let messageId = await this.sendEmail(to, 'Web3大学邮箱验证', `您的6位验证码为：${code}`);
+    if (messageId) {
+      // 存到 worker 中
+      const response = await fetch(`${this.configService.get('CLOUD_FLARE_MAIL_WORKER_URL')}/api/map/set`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        
+        body: JSON.stringify({
+          key: `${to}`,
+          value: code
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        return code;
+      } else {
+        throw new Error(data.message);
+      }
+    }
+    return null;
   }
 
+  // 验证验证码
+  async verifyVerificationCode(to: string, code: string): Promise<boolean> {
+    const response = await fetch(`${this.configService.get('CLOUD_FLARE_MAIL_WORKER_URL')}/api/map/get?key=${to}`);
+    const data = await response.json();
+    if (data.success) {
+      return data.data.value === code;
+    } else {
+      return false;
+    }
+  }
+
+
   // 发送欢迎邮件 
-   async sendWelcomeEmail(to: string, username?: string, walletAddress?: string): Promise<void> {
+  async sendWelcomeEmail(to: string, username?: string, walletAddress?: string): Promise<void> {
     const displayName = username || this.formatWalletAddress(walletAddress);
 
     const subject = '欢迎加入Web3大学';
@@ -52,7 +100,7 @@ export class EmailService {
   }
 
   // 发送课程完成邮件 
-   async sendCourseCompletionEmail(
+  async sendCourseCompletionEmail(
     to: string,
     courseTitle: string,
     username?: string,
@@ -113,7 +161,7 @@ export class EmailService {
   }
 
   // 发送课程购买邮件 
-   async sendCoursePurchaseEmail(
+  async sendCoursePurchaseEmail(
     to: string,
     courseTitle: string,
     username?: string,

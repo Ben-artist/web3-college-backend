@@ -1,11 +1,12 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, UseGuards, Param, Res } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags, ApiParam } from '@nestjs/swagger';
+import type { Response } from 'express';
 
 import { UserId } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import type { UserCourseProgress } from '../course/entities/user-course-progress.entity';
-import type { RegisterUserDto } from './dto/register-user.dto';
+import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import type { User as UserEntity } from './entities/user.entity';
 import { UserService } from './user.service';
@@ -15,16 +16,40 @@ import { UserService } from './user.service';
  * 处理用户相关的HTTP请求
  */
 @ApiTags('用户管理')
-@ApiBearerAuth()
+
 @UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
-  // 登录
+  // 检查用户是否存在
+  @Public()
+  @Post('check')
+  @ApiOperation({ summary: '检查用户是否存在' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        walletAddress: {
+          type: 'string',
+          description: '钱包地址',
+          example: '0x1234567890abcdef1234567890abcdef12345678',
+        },
+      },
+      required: ['walletAddress'],
+    },
+  })
+  @ApiResponse({ status: 200, description: '检查成功' })
+  async checkUserExists(@Body() checkUserExistsDto: { walletAddress: string }): Promise<{ exists: boolean }> {
+    const user = await this.userService.findByWalletAddress(checkUserExistsDto.walletAddress);
+    return { exists: !!user };
+  }
+
+
+  // 用户登录
   @Public()
   @Post('login')
-  @ApiOperation({ summary: '登录' })
+  @ApiOperation({ summary: '用户登录' })
   @ApiBody({
     schema: {
       type: 'object',
@@ -34,19 +59,53 @@ export class UserController {
           description: '用户钱包地址',
           example: '0x1234567890abcdef1234567890abcdef12345678',
         },
+        signature: {
+          type: 'string',
+          description: '签名',
+          example: '0x...',
+        },
+        message: {
+          type: 'string',
+          description: '签名消息',
+          example: 'Web3 College Login...',
+        },
       },
     },
     required: true,
   })
   @ApiResponse({ status: 200, description: '登录成功' })
   @ApiResponse({ status: 400, description: '登录失败' })
-  login(
-    @Body('walletAddress') walletAddress: string
+  async login(
+    @Body() loginData: { walletAddress: string; signature: string; message: string },
+    @Res({ passthrough: true }) res: Response
   ): Promise<{ user: UserEntity; token: string }> {
-    return this.userService.login(walletAddress);
+    const { user, token } = await this.userService.login(loginData);
+
+    // 设置 HttpOnly Cookie 保存 token
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('auth_token', token, {
+      httpOnly: true,
+      secure: isProd, // 生产环境使用 HTTPS
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 天
+      path: '/',
+    });
+
+    return { user, token };
   }
 
-  // 注册为讲师  @Post('registerAsInstructor')
+  // 登出，清除 Cookie
+  @Public()
+  @Post('logout')
+  @ApiOperation({ summary: '用户登出（清除认证Cookie）' })
+  @ApiResponse({ status: 200, description: '登出成功' })
+  async logout(@Res({ passthrough: true }) res: Response): Promise<{ success: boolean }>{
+    res.clearCookie('auth_token', { path: '/' });
+    return { success: true };
+  }
+
+  // 注册为讲师  
+  @Post('registerAsInstructor')
   @ApiOperation({ summary: '注册为讲师' })
   registerAsInstructor(
     @Body() registerUserDto: RegisterUserDto,
@@ -92,5 +151,50 @@ export class UserController {
     @UserId() userId: number
   ): Promise<UserEntity> {
     return this.userService.updateProfile(updateProfileDto, userId);
+  }
+
+  // 获取用户自己创建的课程
+  @Get('createdCourses')
+  @ApiOperation({ summary: '获取用户自己创建的课程' })
+  @ApiResponse({ status: 200, description: '获取成功' })
+  async getCreatedCourses(@UserId() userId: number): Promise<any[]> {
+    return this.userService.getUserCreatedCourses(userId);
+  }
+
+  // 获取用户统计信息
+  @Get('stats')
+  @ApiOperation({ summary: '获取用户统计信息' })
+  @ApiResponse({ status: 200, description: '获取成功' })
+  async getUserStats(@UserId() userId: number): Promise<{
+    totalCourses: number;
+    completedCourses: number;
+    certificates: number;
+    totalLearningTime: number;
+  }> {
+    return this.userService.getUserStats(userId);
+  }
+
+  // 获取用户收藏的课程
+  @Get('favorites')
+  @ApiOperation({ summary: '获取用户收藏的课程' })
+  @ApiResponse({ status: 200, description: '获取成功' })
+  async getFavoriteCourses(@UserId() userId: number): Promise<any[]> {
+    return this.userService.getUserFavoriteCourses(userId);
+  }
+
+  // 获取用户购买的课程
+  @Get('purchases')
+  @ApiOperation({ summary: '获取用户购买的课程' })
+  @ApiResponse({ status: 200, description: '获取成功' })
+  async getPurchasedCourses(@UserId() userId: number): Promise<any[]> {
+    return this.userService.getUserPurchasedCourses(userId);
+  }
+
+  // 获取用户学习进度
+  @Get('progress')
+  @ApiOperation({ summary: '获取用户学习进度' })
+  @ApiResponse({ status: 200, description: '获取成功' })
+  async getLearningProgress(@UserId() userId: number): Promise<any[]> {
+    return this.userService.getUserLearningProgress(userId);
   }
 }

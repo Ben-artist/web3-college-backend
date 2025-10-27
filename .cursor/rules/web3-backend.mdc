@@ -1,0 +1,411 @@
+# Web3 College - Backend API
+
+## 项目概述
+
+Web3 College后端是一个基于NestJS的去中心化社交学习平台API，专注于Web3教育。提供用户认证、课程管理、DAO治理、证书颁发等核心功能。
+
+**原型图参考**: https://karate-pupil-34047105.figma.site/
+
+## 技术栈
+
+- **框架**: NestJS 11 + TypeScript
+- **数据库**: PostgreSQL + TypeORM
+- **认证**: 标准JWT认证（@nestjs/jwt）
+- **Web3**: Ethers.js（可选）
+- **文档**: Swagger/OpenAPI
+- **代码质量**: Biome（格式化+检查）+ SonarCloud（代码质量分析）
+- **Git钩子**: Husky + lint-staged
+- **工具**: pnpm + Winston + Sentry + Helmet
+
+## 项目结构
+
+```
+src/
+├── app.module.ts              # 应用主模块
+├── main.ts                    # 应用入口
+├── common/                    # 公共模块
+│   ├── auth/                  # 认证相关
+│   │   ├── supabase-auth.strategy.ts  # Supabase认证策略
+│   │   ├── supabase-auth.guard.ts     # 认证守卫
+│   │   └── supabase.module.ts         # Supabase模块
+│   ├── entities/              # 公共实体
+│   ├── filters/               # 异常过滤器
+│   ├── interceptors/          # 响应拦截器
+│   ├── middleware/            # 中间件
+│   └── services/              # 公共服务
+├── config/                    # 配置文件
+│   ├── database.config.ts     # 数据库配置
+│   ├── env.validation.ts      # 环境变量验证
+│   └── winston.config.ts      # 日志配置
+├── modules/                   # 业务模块
+│   ├── auth/                  # 认证模块
+│   ├── user/                  # 用户模块
+│   ├── course/                # 课程模块
+│   ├── certificate/           # 证书模块
+│   ├── email/                 # 邮件模块
+│   ├── storage/               # 存储模块
+│   └── performance/           # 性能监控
+└── utils/                     # 工具函数
+```
+
+## 核心功能模块
+
+### 认证模块 (Auth)
+
+- **Web3钱包登录**: 支持MetaMask等钱包连接
+- **SIWE认证**: Sign-In with Ethereum标准
+- **Supabase集成**: JWT token验证
+- **Nonce管理**: 防重放攻击
+
+### 用户模块 (User)
+
+- **用户注册/登录**: 钱包地址绑定
+- **个人资料管理**: 头像、用户名、邮箱
+- **邮箱验证**: 验证码发送和验证
+- **用户权限**: 讲师申请和审核
+
+### 课程模块 (Course)
+
+- **课程管理**: 创建、编辑、删除课程
+- **章节管理**: 课程内容组织
+- **学习进度**: 用户学习状态跟踪
+- **课程收藏**: 用户收藏功能
+- **课程购买**: 支付和权限管理
+
+### 证书模块 (Certificate)
+
+- **NFT证书**: 课程完成证书
+- **证书验证**: 区块链验证
+- **证书查询**: 用户证书列表
+
+### 存储模块 (Storage)
+
+- **文件上传**: 支持图片、视频等
+- **S3集成**: AWS S3存储
+- **预签名URL**: 安全文件访问
+
+### 邮件模块 (Email)
+
+- **模板系统**: Handlebars模板
+- **邮件发送**: 欢迎邮件、课程完成通知
+- **SMTP配置**: 邮件服务集成
+
+## API接口
+
+### 认证接口
+
+- `POST /api/auth/nonce` - 获取登录nonce
+- `POST /api/auth/login` - Web3钱包登录
+- `POST /api/auth/verify` - 验证签名
+
+### 用户接口
+
+- `GET /api/users/profile` - 获取用户信息
+- `PUT /api/users/profile` - 更新用户信息
+- `POST /api/users/register` - 用户注册
+- `POST /api/users/email-code` - 发送邮箱验证码
+
+### 课程接口
+
+- `GET /api/courses` - 获取课程列表
+- `POST /api/courses` - 创建课程
+- `GET /api/courses/:id` - 获取课程详情
+- `PUT /api/courses/:id` - 更新课程
+- `DELETE /api/courses/:id` - 删除课程
+- `POST /api/courses/:id/favorite` - 收藏课程
+- `POST /api/courses/:id/purchase` - 购买课程
+
+### 证书接口
+
+- `POST /api/certificates/create` - 创建证书
+- `GET /api/certificates/user` - 获取用户证书
+
+## 数据库设计
+
+### 核心实体
+
+#### User (用户)
+
+```typescript
+- id: number (主键)
+- walletAddress: string (钱包地址，唯一)
+- username: string (用户名)
+- email: string (邮箱)
+- avatarUrl: string (头像URL)
+- isInstructor: boolean (是否讲师)
+- createdAt: Date
+- updatedAt: Date
+```
+
+#### Course (课程)
+
+```typescript
+- courseId: string (课程ID，主键)
+- title: string (标题)
+- description: string (描述)
+- price: string (价格，YD币)
+- instructorId: number (讲师ID)
+- thumbnailUrl: string (缩略图)
+- status: string (状态)
+- createdAt: Date
+- updatedAt: Date
+```
+
+#### Chapter (章节)
+
+```typescript
+- id: number (主键)
+- courseId: string (课程ID)
+- title: string (标题)
+- content: string (内容)
+- sortOrder: number (排序)
+- duration: number (时长，秒)
+- createdAt: Date
+- updatedAt: Date
+```
+
+#### UserCourseProgress (学习进度)
+
+```typescript
+- id: number (主键)
+- userId: number (用户ID)
+- courseId: string (课程ID)
+- chapterId: number (章节ID)
+- completedAt: Date (完成时间)
+- userRating: number (用户评分)
+- ratedAt: Date (评分时间)
+```
+
+## 认证流程
+
+### Web3钱包登录
+
+1. 前端请求nonce: `POST /api/auth/nonce`
+2. 用户签名消息: `SIWE.signMessage()`
+3. 提交签名: `POST /api/auth/login`
+4. 后端验证签名: `SIWE.verifyMessage()`
+5. 返回JWT token
+
+### API认证
+
+- 使用`@UseGuards(SupabaseAuthGuard)`保护路由
+- 通过`@CurrentUser()`装饰器获取用户信息
+- JWT token在Authorization header中传递
+
+## 环境配置
+
+```env
+# 数据库
+DATABASE_URL=postgresql://user:password@host:port/database
+
+# Supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+
+# 邮件服务
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+
+# AWS S3
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_REGION=us-east-1
+AWS_S3_BUCKET=your-bucket-name
+
+# 应用配置
+NODE_ENV=development
+PORT=4000
+API_PREFIX=api
+```
+
+## 开发规范
+
+### 命名约定
+
+- **模块**: `kebab-case.module.ts`
+- **控制器**: `kebab-case.controller.ts`
+- **服务**: `kebab-case.service.ts`
+- **实体**: `kebab-case.entity.ts`
+- **DTO**: `kebab-case.dto.ts`
+- **装饰器**: `kebab-case.decorator.ts`
+
+### 代码规范
+
+- 使用TypeScript严格模式
+- 所有API接口添加Swagger文档
+- 使用class-validator进行参数验证
+- 统一异常处理和响应格式
+- 使用Winston进行日志记录
+
+### 模块结构
+
+每个业务模块包含：
+
+- `*.module.ts` - 模块定义
+- `*.controller.ts` - 控制器
+- `*.service.ts` - 业务逻辑
+- `dto/` - 数据传输对象
+- `entities/` - 数据库实体
+- `swagger-doc.ts` - API文档
+
+## 代码质量工具配置
+
+### Biome - 代码格式化和检查
+
+**配置文件**: `biome.json`
+
+```json
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": { "ignoreUnknown": false, "ignore": ["node_modules/**", "dist/**", "coverage/**", "logs/**", ".git/**", "*.log"] },
+  "formatter": { "enabled": true, "formatWithErrors": false, "indentStyle": "space", "indentWidth": 2, "lineEnding": "lf", "lineWidth": 100, "attributePosition": "auto" },
+  "organizeImports": { "enabled": true },
+  "linter": { "enabled": true, "rules": { "recommended": true, "complexity": { "all": true }, "correctness": { "all": true }, "security": { "all": true }, "style": { "all": true }, "suspicious": { "all": true }, "performance": { "all": true } } },
+  "javascript": { "formatter": { "jsxQuoteStyle": "double", "quoteProperties": "asNeeded", "trailingCommas": "es5", "semicolons": "always", "arrowParentheses": "always", "bracketSpacing": true, "bracketSameLine": false, "quoteStyle": "single", "attributePosition": "auto" }, "parser": { "unsafeParameterDecoratorsEnabled": true } },
+  "json": { "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineEnding": "lf", "lineWidth": 100, "trailingCommas": "none" } }
+}
+```
+
+**命令**:
+- `pnpm format` - 格式化代码
+- `pnpm format:check` - 检查格式
+- `pnpm lint` - 代码检查
+- `pnpm lint:fix` - 自动修复
+- `pnpm check` - 完整检查
+- `pnpm check:fix` - 自动修复所有问题
+
+### SonarCloud - 代码质量分析
+
+**配置文件**: `sonar-project.properties`
+
+```properties
+sonar.projectKey=web3-university-backend
+sonar.organization=your-organization-key
+sonar.projectName=Web3 University Backend
+sonar.projectVersion=1.0.0
+sonar.sources=src
+sonar.tests=test
+sonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/**,**/*.spec.ts,**/*.test.ts,**/logs/**
+sonar.inclusions=**/*.ts,**/*.js,**/*.json
+sonar.typescript.tsconfigPath=tsconfig.json
+sonar.qualitygate.wait=true
+```
+
+**GitHub Actions**: `.github/workflows/sonarcloud.yml`
+
+**命令**:
+- `pnpm sonar` - 运行SonarCloud分析
+- `pnpm sonar:local` - 本地分析
+
+### Husky - Git钩子管理
+
+**配置**: `package.json`
+
+```json
+{
+  "scripts": {
+    "prepare": "husky",
+    "pre-commit": "lint-staged",
+    "pre-push": "pnpm test && pnpm type-check"
+  },
+  "lint-staged": {
+    "*.{ts,js,tsx,jsx}": ["biome format --write", "biome lint --write", "biome check --write"],
+    "*.{json,md}": ["biome format --write"]
+  }
+}
+```
+
+**钩子文件**:
+- `.husky/pre-commit` - 提交前运行lint-staged
+- `.husky/pre-push` - 推送前运行测试和类型检查
+
+## 重要变更记录
+
+### 2024-10-24 - 代码质量工具集成
+
+#### 新增工具
+
+- **Biome**: 替换ESLint，提供更快的代码格式化和检查
+- **SonarCloud**: 深度代码质量分析，包括安全性、可靠性、可维护性
+- **Husky**: 专业的Git钩子管理，确保代码质量
+- **lint-staged**: 只处理暂存文件，提高性能
+
+#### 认证系统简化
+
+- 移除Supabase认证，使用标准JWT认证（@nestjs/jwt）
+- 移除Web3签名认证（SIWE）
+- 简化AuthModule，只保留装饰器功能
+- UserService直接生成JWT token
+
+### 2024-10-23 - 认证系统重构
+
+#### 修复问题
+
+- 修复Supabase认证策略token处理错误
+- 修复PassportModule未注册问题
+- 修复数据库连接超时问题
+- 修复API端点超时问题
+
+#### 新增功能
+
+- 用户课程收藏功能 (`UserCourseFavorite`)
+- 用户课程购买功能 (`UserCoursePurchase`)
+- 用户学习进度跟踪 (`UserCourseProgress`)
+- 课程评分系统
+
+#### 架构优化
+
+- 分离课程关系表，提高查询性能
+- 优化数据库索引设计
+- 统一认证装饰器 (`@CurrentUser`, `@UserWallet`, `@UserId`)
+- 完善Swagger API文档
+
+## 开发注意事项
+
+1. **数据库同步**: 开发环境使用`synchronize: true`自动同步表结构
+2. **认证测试**: 需要有效的Supabase JWT token进行API测试
+3. **文件上传**: 使用预签名URL确保安全上传
+4. **错误处理**: 所有异常都会被全局异常过滤器捕获
+5. **日志记录**: 使用Winston记录请求和错误日志
+6. **性能监控**: 集成Sentry进行错误监控和性能分析
+
+## 启动命令
+
+```bash
+# 安装依赖
+pnpm install
+
+# 开发模式
+pnpm dev
+
+# 生产模式
+pnpm start:prod
+
+# 代码质量
+pnpm format          # 格式化代码
+pnpm check           # 检查代码质量
+pnpm check:fix       # 自动修复问题
+pnpm type-check      # TypeScript类型检查
+
+# 测试
+pnpm test            # 运行测试
+pnpm test:cov        # 测试覆盖率
+
+# SonarCloud
+pnpm sonar:local     # 本地代码质量分析
+```
+
+## API文档
+
+启动服务后访问: `http://localhost:4000/api`
+
+---
+
+**更新日期**: 2024-10-24
+**维护者**: Web3 College Team
+**包管理器**: pnpm (>=8.0.0)
+**Node版本**: >=20.0.0
+**代码质量**: Biome + SonarCloud + Husky

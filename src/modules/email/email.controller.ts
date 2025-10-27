@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { EmailService } from './email.service';
@@ -8,7 +8,91 @@ import { EmailService } from './email.service';
 @UseGuards(JwtAuthGuard)
 @Controller('email')
 export class EmailController {
-  constructor(private readonly emailService: EmailService) {}
+  constructor(private readonly emailService: EmailService) { }
+  // 发送6位数字验证码
+  @Post('send-verification-code')
+  @ApiOperation({ summary: '发送验证码' })
+  @ApiBody({
+    description: '发送验证码',
+    schema: {
+      type: 'object',
+      properties: {
+        userEmail: {
+          type: 'string',
+          description: '用户邮箱',
+          example: 'user@example.com',
+        },
+      },
+      required: ['userEmail'],
+    },
+  })
+  @ApiResponse({ status: 200, description: '验证码发送成功' })
+  async sendVerificationCode(
+    @Body('userEmail') userEmail: string
+  ): Promise<{ error?: string, success: boolean; message: string }> {
+    try {
+      await this.emailService.sendVerificationCode(userEmail);
+      return {
+        success: true,
+        message: '验证码发送成功',
+      };
+    } catch (_error) {
+      return {
+        error: _error.message,
+        success: false,
+        message: '验证码发送失败',
+      };
+    }
+  }
+
+  @Post('verify-verification-code')
+  @ApiOperation({ summary: '验证验证码' })
+  @ApiBody({
+    description: '验证验证码',
+    schema: {
+      type: 'object',
+      properties: {
+        userEmail: {
+          type: 'string',
+          description: '用户邮箱',
+          example: 'user@example.com',
+        },
+        code: {
+          type: 'string',
+          description: '验证码',
+          example: '123456',
+        },
+      },
+      required: ['userEmail', 'code'],
+    },
+  })
+  @ApiResponse({ status: 200, description: '验证码验证成功' })
+  async verifyVerificationCode(
+    @Body('userEmail') userEmail: string,
+    @Body('code') code: string
+  ): Promise<{ error?: string, success: boolean; message: string }> {
+    try {
+      let valid = await this.emailService.verifyVerificationCode(userEmail, code);
+      if (valid) {
+        return {
+          success: true,
+          message: '验证码验证成功',
+        };
+      } else {
+        return {
+          error: '验证码验证失败',
+          success: false,
+          message: '验证码验证失败',
+        };
+      }
+    } catch (_error) {
+      return {
+        error: _error.message,
+        success: false,
+        message: '验证码验证失败',
+      };
+    }
+  }
 
   @Post('welcome')
   @ApiOperation({ summary: '发送欢迎邮件' })
@@ -41,7 +125,7 @@ export class EmailController {
     @Body('userEmail') userEmail: string,
     @Body('username') username?: string,
     @Body('walletAddress') walletAddress?: string
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<{ error?: string, success: boolean; message: string }> {
     try {
       await this.emailService.sendWelcomeEmail(userEmail, username, walletAddress);
       return {
@@ -50,6 +134,7 @@ export class EmailController {
       };
     } catch (_error) {
       return {
+        error: _error.message,
         success: false,
         message: '欢迎邮件发送失败',
       };

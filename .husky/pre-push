@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Pre-push 钩子 - 运行测试和类型检查
+echo "🧪 运行测试..."
+pnpm test
+
+echo "🔍 类型检查..."
+pnpm type-check
+
+# 如果有SonarCloud token，运行分析
+if [ -n "$SONAR_TOKEN" ]; then
+    echo "🔍 运行SonarCloud分析..."
+    pnpm sonar:local
+else
+    echo "⚠️ 未设置SONAR_TOKEN，跳过SonarCloud分析"
+fi
+
+echo "✅ Pre-push检查通过！"

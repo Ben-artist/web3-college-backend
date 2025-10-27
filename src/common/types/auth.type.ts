@@ -5,4 +5,6 @@ export interface AuthenticatedUser {
   username: string;
   supabaseUser: Record<string, unknown>;
   accessToken: string;
+  isInstructorRegistered: boolean;
+  isInstructorApproved: boolean;
 }

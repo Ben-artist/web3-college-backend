@@ -13,11 +13,19 @@ import { EmailService } from './email.service';
           transport: {
             host: configService.get<string>('MAIL_HOST', 'smtp.gmail.com'),
             port: configService.get<number>('MAIL_PORT', 587),
-            secure: configService.get<boolean>('MAIL_SECURE', false), // true for 465, false for other ports
+            secure: false, // 使用STARTTLS而不是SSL
             auth: {
               user: configService.get<string>('MAIL_USER'),
               pass: configService.get<string>('MAIL_PASS'),
             },
+            // 简化的TLS配置
+            tls: {
+              rejectUnauthorized: false,
+            },
+            // 连接选项
+            connectionTimeout: 30000,
+            greetingTimeout: 15000,
+            socketTimeout: 30000,
           },
           defaults: {
             from: `"Web3大学" <${configService.get<string>('MAIL_FROM', 'noreply@web3-university.com')}>`,

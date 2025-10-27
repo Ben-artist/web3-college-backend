@@ -13,7 +13,7 @@ import { Course } from './course.entity';
 
 /**
  * 用户课程收藏实体
- * 记录用户收藏的课程，与购买记录分�? */
+ * 记录用户收藏的课程，与购买记录分�? */
 @Entity('user_course_favorites')
 @Unique(['user', 'course'])
 @Index(['user'])
@@ -39,7 +39,4 @@ export class UserCourseFavorite extends CommonEntity {
   @ManyToOne(() => Course, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'course_id', referencedColumnName: 'courseId' })
   course: Course;
-
-  // 收藏时间（继承自CommonEntity的createdAt�?  // 可以添加额外的收藏相关字�?  @Column({ type: 'text', nullable: true })
-  notes?: string; // 用户对课程的备注
 }

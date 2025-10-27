@@ -1,0 +1,54 @@
+import { Body, Controller, Get, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import type { Chapter } from './entities/chapter.entity';
+import {
+  createChapterApiDoc,
+  deleteChapterApiDoc,
+  findAllApiDoc,
+  findOneApiDoc,
+  updateChapterApiDoc,
+} from './swagger-doc';
+import { CreateChapterDto } from './dto/create-chapter.dto';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { User } from '../user/entities/user.entity';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { ChapterService } from './chapter.service';
+import { UpdateChapterDto } from './dto/update-chapter.dto';
+@ApiTags('课程管理')
+@UseGuards(JwtAuthGuard)
+@Controller('chapter')
+export class ChapterController {
+  constructor(private readonly chapterService: ChapterService) { }
+
+
+  @Post('create')
+  @createChapterApiDoc()
+  async createChapter(@Body() createChapterDto: CreateChapterDto): Promise<Chapter> {
+    return await this.chapterService.createChapter(createChapterDto);
+  }
+
+  @Post('update')
+  @updateChapterApiDoc()
+  async updateChapter(@Body() updateChapterDto: UpdateChapterDto): Promise<Chapter> {
+    return await this.chapterService.updateChapter(updateChapterDto);
+  }
+
+  @Get('list')
+  @findAllApiDoc()
+  async getChapterList(@Query('courseId') courseId: number): Promise<Chapter[]> {
+    return await this.chapterService.getChapterList(courseId);
+  }
+
+  // 删除
+  @Post('delete')
+  @deleteChapterApiDoc()
+  async deleteChapter(@Body() deleteChapterDto: { chapterId: number }): Promise<boolean> {
+    return await this.chapterService.deleteChapter(deleteChapterDto.chapterId);
+  }
+
+  @Get('detail')
+  @findOneApiDoc()
+  async getChapter(@Query('chapterId') chapterId: number): Promise<Chapter> {
+    return await this.chapterService.getChapterDetail(chapterId);
+  }
+}

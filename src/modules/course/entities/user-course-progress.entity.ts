@@ -49,10 +49,11 @@ export class UserCourseProgress extends CommonEntity {
   })
   progress: number;
 
-  // 是否已购�?  @Column({ default: false, name: 'is_paid' })
+  // 是否已购买 
+   @Column({ default: false, name: 'is_paid' })
   isPaid: boolean;
 
-  // 是否已完�?完成需要发放NFT证书
+  // 是否已完成 完成需要发放NFT证书
   @Column({ default: false, name: 'is_completed' })
   isCompleted: boolean;
 

@@ -1,11 +1,16 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 
-import { Chapter } from './entities/chapter.entity';
 import { Course } from './entities/course.entity';
-
+import { CreateCourseDto } from './dto/create-course.dto';
+import { SearchCourseDto } from './dto/search-course.dto';
+import { Chapter } from '../chapter/entities/chapter.entity';
 export function CreateApiDoc() {
   return applyDecorators(
+    ApiBody({
+      description: '创建课程请求体',
+      type: CreateCourseDto,
+    }),
     ApiOperation({ summary: '创建课程（需要讲师或管理员权限）' }),
     ApiResponse({ status: 201, description: '课程创建成功', type: Course }),
     ApiResponse({ status: 400, description: '请求参数错误' }),
@@ -44,7 +49,13 @@ export function getMyCoursesApiDoc() {
 }
 
 export function findAllApiDoc() {
-  return applyDecorators(ApiOperation({ summary: '获取课程列表' }));
+  return applyDecorators(
+    ApiOperation({ summary: '获取课程列表' }),
+    ApiBody({
+      description: '搜索课程请求体',
+      type: SearchCourseDto,
+    }),
+  );
 }
 
 export function findOneApiDoc() {

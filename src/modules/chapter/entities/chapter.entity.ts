@@ -1,6 +1,7 @@
 import { CommonEntity } from 'src/common/entities/common.entity';
 import {
   Column,
+  DeleteDateColumn,
   Entity,
   Index,
   JoinColumn,
@@ -8,13 +9,13 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Course } from './course.entity';
+import { Course } from '../../course/entities/course.entity';
 import { UserChapterProgress } from './user-chapter-progress.entity';
 /**
  * 章节实体 - 单个课程章节
- * 属于某个课程的具体章节内�? */
+ * 属于某个课程的具体章节内�? */
 @Entity('chapters')
-@Index(['course', 'sortOrder'])
+@Index(['course', 'orderSequence'])
 export class Chapter extends CommonEntity {
   @PrimaryGeneratedColumn()
   chapterId: number;
@@ -23,7 +24,8 @@ export class Chapter extends CommonEntity {
   @Column()
   title: string;
 
-  // 视频时长（秒�?  @Column({ default: 0 })
+  // 视频时长（秒） 
+   @Column({ default: 0 })
   duration: number;
 
   @Column({ type: 'text', nullable: true })
@@ -34,14 +36,15 @@ export class Chapter extends CommonEntity {
   videoUrl?: string;
 
   // 章节顺序
-  @Column({ name: 'sort_order', default: 0 })
-  sortOrder: number;
+  @Column({ name: 'order_sequence', default: 0 })
+  orderSequence: number;
 
-  // 是否免费
-  @Column({ default: false })
-  isFree: boolean;
+  // 是否免费观看
+  @Column({ default: false, name: 'is_free_preview' })
+  isFreePreview: boolean;
 
-  // 关联的课�?  @Column({ name: 'course_id' })
+  // 关联的课程
+   @Column({ name: 'course_id' })
   courseId: number;
 
   @ManyToOne(

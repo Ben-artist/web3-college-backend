@@ -3,11 +3,11 @@ import { COURSE_DIFFICULTY, COURSE_STATUS } from 'src/config/constant';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { NFTCertificate } from '../../certificate/entities/nft-certificate.entity';
 import { User } from '../../user/entities/user.entity';
-import { Chapter } from './chapter.entity';
-
+import { UserCourseProgress } from './user-course-progress.entity';
+import { Chapter } from '../../chapter/entities/chapter.entity';
 /**
  * 课程实体 - 课程系列/集合
- * 包含多个章节的完整课�? */
+ * 包含多个章节的完整课程 */
 @Entity('courses')
 export class Course extends CommonEntity {
   @PrimaryGeneratedColumn()
@@ -38,8 +38,8 @@ export class Course extends CommonEntity {
   instructorId: number;
 
   // 讲师钱包地址（冗余存储，方便直接查询）  
-   @Column({ name: 'instructor_wallet', nullable: true })
-  instructorWallet?: string;
+   @Column({ name: 'instructor_wallet_address', nullable: true })
+  instructorWalletAddress?: string;
 
   // 课程分类
   @Column({ type: 'json' })
@@ -91,8 +91,10 @@ export class Course extends CommonEntity {
   )
   certificates: NFTCertificate[];
 
-  // 获取课程课时数量（动态计算）
-  get chapterCount(): number {
-    return this.chapters?.length || 0;
-  }
+  // 用户课程进度记录
+  @OneToMany(
+    () => UserCourseProgress,
+    (progress) => progress.course
+  )
+  userCourseProgresses: UserCourseProgress[];
 }

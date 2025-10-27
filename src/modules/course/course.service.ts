@@ -3,12 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, type Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import type { CreateCourseDto } from './dto/create-course.dto';
-import { Chapter } from './entities/chapter.entity';
 import { Course } from './entities/course.entity';
 import { UserCourseProgress } from './entities/user-course-progress.entity';
-import { plainToClassFromExist } from 'class-transformer';
-import { CreateChapterDto } from './dto/create-chapter.dto';
-
+import { Chapter } from '../chapter/entities/chapter.entity';
 @Injectable()
 export class CourseService {
   constructor(
@@ -20,30 +17,38 @@ export class CourseService {
     private userCourseProgressRepository: Repository<UserCourseProgress>,
     @InjectRepository(User)
     private userRepository: Repository<User>
-  ) {}
+  ) { }
 
   /**
    * 创建课程（需要验证用户身份和权限）
    */
-  async create(createCourseDto: CreateCourseDto): Promise<Course> {
-    // 验证用户是否存在
-    const user = await this.userRepository.findOne({
-      where: { walletAddress: createCourseDto.walletAddress },
-    });
-
-    if (!user) {
-      throw new NotFoundException(`用户钱包地址 ${createCourseDto.walletAddress} 不存在`);
-    }
-
-    // 验证讲师是否已注册和审核通过
-    if (!user.isInstructorRegistered || !user.isInstructorApproved) {
-      throw new ForbiddenException('讲师需要先注册并通过审核才能创建课程');
+  async create(createCourseDto: CreateCourseDto, user: User): Promise<
+  Course | {success:boolean,message:string,data:null}  > {
+    console.log('user', user)
+    console.log('user.isInstructorRegistered', user.isInstructorRegistered)
+    console.log('user.isInstructorApproved', user.isInstructorApproved)
+    // 验证讲师已注册并审核通过
+    if (!(user.isInstructorRegistered && user.isInstructorApproved)) {
+      return {
+        success: false,
+        message: '讲师需要先注册并通过审核才能创建课程2',
+        data: null,
+      };
     }
     const course = new Course();
-    const courseData = plainToClassFromExist(course, createCourseDto);
-    course.instructor = user;
-    const savedCourse = await this.courseRepository.save(courseData);
-    return savedCourse;
+    Object.assign(course, createCourseDto);
+
+    // 设置额外的字段
+    course.price = parseFloat(createCourseDto.price || '0') || 0;
+    course.instructorId = user.id;
+    course.instructorWalletAddress = user.walletAddress;
+
+    try {
+      const savedCourse = await this.courseRepository.save(course);
+      return savedCourse;
+    } catch (error) {
+      throw error;
+    }
   }
 
   /**
@@ -60,9 +65,9 @@ export class CourseService {
     }
 
     const courses = await this.courseRepository.find({
-      where: { instructorWallet: user.walletAddress },
+      where: { instructorWalletAddress: user.walletAddress },
       order: { createdAt: 'DESC' },
-      relations: ['lessons', 'userProgresses'], // 包含关联数据以支持动态计算
+      relations: ['chapters', 'instructor'], // 包含关联数据以支持动态计算
       skip: (page - 1) * limit,
       take: limit,
     });
@@ -73,25 +78,33 @@ export class CourseService {
    * 获取所有课程
    */
   async findAll({
-    page,
-    limit,
-    free,
-    priceRange,
+    isFree,
+    sortByPrice,
+    sortByRating,
+    sortByDate,
     keyword,
     categories,
+    difficulty,
   }: {
-    page: number;
-    limit: number;
     categories?: string[];
-    free?: string;
-    priceRange?: string[];
+    difficulty?: string;
+    isFree?: boolean;
+    sortByPrice?: 'ASC' | 'DESC';
+    sortByRating?: 'ASC' | 'DESC';
+    sortByDate?: 'ASC' | 'DESC';
     keyword?: string;
   }): Promise<any[]> {
-    // 构建查询条件
+    // 构建查询条件，使用子查询计算学生数量
     const queryBuilder = this.courseRepository
       .createQueryBuilder('course')
-      .leftJoinAndSelect('course.lessons', 'lessons')
-      .leftJoinAndSelect('course.userProgresses', 'userProgresses')
+      .leftJoinAndSelect('course.chapters', 'chapters')
+      .leftJoinAndSelect('course.instructor', 'instructor')
+      .loadRelationCountAndMap(
+        'course.studentCount',
+        'course.userCourseProgresses',
+        'progress',
+        (qb) => qb.where('progress.isPaid = :isPaid', { isPaid: true })
+      )
       .orderBy('course.createdAt', 'DESC');
 
     // 分类筛选 - 使用 JSON 包含操作符
@@ -101,8 +114,8 @@ export class CourseService {
       const categoryConditions =
         categories && categories.length > 0
           ? categories
-              .map((_, index) => `course.categories::jsonb @> :category${index}::jsonb`)
-              .join(' OR ')
+            .map((_, index) => `course.categories::jsonb @> :category${index}::jsonb`)
+            .join(' OR ')
           : '';
       queryBuilder.andWhere(`(${categoryConditions})`, {
         ...categories?.reduce(
@@ -115,47 +128,59 @@ export class CourseService {
       });
     }
 
+    // 难度筛选
+    if (difficulty) {
+      queryBuilder.andWhere('course.difficulty = :difficulty', { difficulty });
+    }
+
     // 免费/付费筛选
-    if (free !== undefined) {
-      queryBuilder.andWhere('course.isFree = :isFree', { isFree: free });
+    if (isFree) {
+      queryBuilder.andWhere('course.isFree = :isFree', { isFree: isFree });
     }
 
     // 价格范围筛选
-    if (priceRange?.length === 2) {
-      queryBuilder.andWhere('course.price BETWEEN :minPrice AND :maxPrice', {
-        minPrice: priceRange[0],
-        maxPrice: priceRange[1],
-      });
+    if (sortByPrice) {
+      queryBuilder.orderBy('course.price', sortByPrice);
     }
 
+    // 评分排序
+    if (sortByRating) {
+      queryBuilder.orderBy('course.rating', sortByRating);
+    }
+
+    // 日期排序
+    if (sortByDate) {
+      queryBuilder.orderBy('course.createdAt', sortByDate);
+    }
     // 关键词搜索
     if (keyword) {
       queryBuilder.andWhere('course.title LIKE :keyword', {
         keyword: `%${keyword}%`,
       });
     }
-
-    // 分页
-    queryBuilder.skip((page - 1) * limit).take(limit);
-
-    const courses = await queryBuilder.getMany();
-
-    // 手动添加计算字段，确保 getter 方法的值被包含在返回结果中
-    return courses;
+    // loadRelationCountAndMap 会自动将计数映射到 course.studentCount
+    return await queryBuilder.getMany();
   }
 
   /**
    * 根据ID获取课程
    */
-  async findOne(courseId: number): Promise<Course> {
+  async findOne(courseId: number): Promise<{ course: Course, instructor: User }> {
     const course = await this.courseRepository.findOne({
       where: { courseId: courseId },
-      relations: ['lessons', 'userProgresses'], // 包含关联数据以支持动态计算
+      relations: ['chapters', 'instructor'], // 包含关联数据以支持动态计算
     });
     if (!course) {
       throw new NotFoundException(`课程ID ${courseId} 不存在`);
     }
-    return course;
+    // 找到课程对应的老师
+    const instructor = await this.userRepository.findOne({
+      where: { id: course.instructorId },
+    });
+    if (!instructor) {
+      throw new NotFoundException(`老师ID ${course.instructorId} 不存在`);
+    }
+    return { course, instructor };
   }
 
   /**
@@ -200,43 +225,9 @@ export class CourseService {
     const averageRating = allRatings.length > 0 ? totalRating / allRatings.length : 0;
 
     // 更新课程评分
-    course.rating = Math.round(averageRating * 100) / 100; // 保留两位小数
+    course.course.rating = Math.round(averageRating * 100) / 100; // 保留两位小数
     // reviewCount 现在通过 getter 方法动态计算，无需手动更新
 
     return await this.courseRepository.save(course);
-  }
-
-  /**
-   * 创建章节
-   */
-  async createChapter(createChapterDto: CreateChapterDto): Promise<Chapter> {
-    // 验证课程是否存在
-    const course = await this.findOne(createChapterDto.courseId);
-    const chapter = new Chapter();
-    const chapterData = plainToClassFromExist(chapter, createChapterDto);
-    chapter.course = course;
-    const savedChapter = await this.chapterRepository.save(chapterData);
-    return savedChapter;
-  }
-
-  /**
-   * 获取课程的所有章节
-   */
-  async getCourseChapters(courseId: number): Promise<Chapter[]> {
-    await this.findOne(courseId); // 验证课程存在
-    return await this.chapterRepository.find({
-      where: { course: { courseId } },
-      order: { sortOrder: 'ASC' },
-    });
-  }
-
-  async findOneChapter(chapterId: number): Promise<Chapter> {
-    const chapter = await this.chapterRepository.findOne({
-      where: { chapterId },
-    });
-    if (!chapter) {
-      throw new NotFoundException(`章节ID ${chapterId} 不存在`);
-    }
-    return chapter;
   }
 }

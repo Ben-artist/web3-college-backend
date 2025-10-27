@@ -8,8 +8,9 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 import { AppLoggerService } from './common/services/logger.service';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import * as cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-
+ 
 /**
  * 应用程序启动入口
  * 配置全局中间件和管道
@@ -46,21 +47,34 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
     })
   );
 
+  // 允许携带凭证（Cookie）
+  const allowedOrigins = process.env.FRONTEND_ORIGIN
+    ? process.env.FRONTEND_ORIGIN.split(',').map((o) => o.trim())
+    : ['http://localhost:3000'];
+
   app.enableCors({
-    origin: '*',
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error('Not allowed by CORS'), false);
+    },
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   });
+  
+  // 解析Cookie
+  app.use(cookieParser());
+  
   app.use(helmet());
   app.use(
     rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 100, // limit each IP to 100 requests per windowMs
+      skipSuccessfulRequests: true, // 跳过成功的请求，只限制错误请求
     })
   );
 
@@ -68,7 +82,6 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Web3 University API')
     .setVersion('1.0')
-    .addTag('Web3 University API')
     .addBearerAuth()
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);

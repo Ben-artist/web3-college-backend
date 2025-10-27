@@ -1,0 +1,233 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '8'
+
+jobs:
+  # AI代码审查
+  ai-code-review:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: AI Code Review
+        uses: github/super-linter@v4
+        env:
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_ALL_CODEBASE: false
+          VALIDATE_TYPESCRIPT_ES: false
+          VALIDATE_JAVASCRIPT_ES: false
+          # 禁用ESLint，使用Biome
+          DISABLE_ERRORS: true
+
+      - name: AI Code Review with Claude
+        uses: anthropic-ai/claude-action@v1
+        with:
+          api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            请审查这个TypeScript/NestJS项目的代码变更，重点关注：
+            1. 代码质量和最佳实践
+            2. 安全性问题
+            3. 性能优化建议
+            4. 错误处理
+            5. 类型安全
+            6. 代码可读性和维护性
+
+            请提供具体的改进建议和代码示例。
+
+  # 代码格式化和检查
+  code-format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run Biome check
+        run: pnpm biome check .
+
+      - name: Run Biome format
+        run: pnpm biome format --write .
+
+      - name: Commit formatted code
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git diff --staged --quiet || git commit -m "🤖 Auto-format code with Biome"
+          git push
+
+  # 构建和测试
+  build-and-test:
+    runs-on: ubuntu-latest
+    needs: [code-format]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run Biome check
+        run: pnpm biome check .
+
+      - name: Build application
+        run: pnpm build
+
+      - name: Run tests
+        run: pnpm test --coverage
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+
+  # 部署到AWS EC2
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build application
+        run: pnpm build
+
+      - name: Create deployment package
+        run: |
+          tar -czf deployment.tar.gz dist/ package.json pnpm-lock.yaml
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || 22 }}
+          script: |
+            # 停止应用
+            sudo systemctl stop web3-university-api || true
+
+            # 备份当前版本
+            if [ -d "/opt/web3-university-api" ]; then
+              sudo mv /opt/web3-university-api /opt/web3-university-api.backup.$(date +%Y%m%d_%H%M%S)
+            fi
+
+            # 创建新目录
+            sudo mkdir -p /opt/web3-university-api
+            sudo chown $USER:$USER /opt/web3-university-api
+
+      - name: Copy files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || 22 }}
+          source: 'deployment.tar.gz'
+          target: '/opt/web3-university-api/'
+
+      - name: Extract and setup on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || 22 }}
+          script: |
+            cd /opt/web3-university-api
+
+            # 解压文件
+            tar -xzf deployment.tar.gz
+            rm deployment.tar.gz
+
+            # 安装依赖
+            pnpm install --prod
+
+            # 设置环境变量
+            sudo cp .env.production /opt/web3-university-api/.env
+
+            # 重启应用
+            sudo systemctl start web3-university-api
+            sudo systemctl enable web3-university-api
+
+            # 健康检查
+            sleep 10
+            curl -f http://localhost:4000/api/health || exit 1
+
+            echo "✅ 部署成功！"
+
+  # 通知
+  notify:
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: always()
+    steps:
+      - name: Notify deployment status
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        if: always()

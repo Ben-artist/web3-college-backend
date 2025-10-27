@@ -33,7 +33,7 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
-    const token = this.extractTokenFromHeader(request);
+    const token = this.extractToken(request);
 
     if (!token) {
       throw new UnauthorizedException('No token provided');
@@ -41,7 +41,7 @@ export class JwtAuthGuard implements CanActivate {
 
     try {
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get<string>('JWT_SECRET') || 'your-secret-key',
+        secret: this.configService.get<string>('JWT_SECRET'),
       });
 
       // 将用户信息附加到请求对象
@@ -53,8 +53,10 @@ export class JwtAuthGuard implements CanActivate {
     return true;
   }
 
-  private extractTokenFromHeader(request: any): string | undefined {
-    const [type, token] = request.headers.authorization?.split(' ') ?? [];
-    return type === 'Bearer' ? token : undefined;
+  private extractToken(request: any): string | undefined {
+    if (request.cookies) {
+      return request.cookies['auth_token'];
+    }
+    return undefined;
   }
 }

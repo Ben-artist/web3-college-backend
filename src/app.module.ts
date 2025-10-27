@@ -17,6 +17,7 @@ import { CourseModule } from './modules/course/course.module';
 import { EmailModule } from './modules/email/email.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { UserModule } from './modules/user/user.module';
+import { ChapterModule } from './modules/chapter/chapter.module';
 /**
  * 应用主模块
  * 负责导入所有必要的模块和配置
@@ -73,6 +74,7 @@ import { UserModule } from './modules/user/user.module';
     StorageModule,
     CertificateModule,
     EmailModule,
+    ChapterModule,
   ],
 })
 export class AppModule implements NestModule {

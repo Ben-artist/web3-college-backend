@@ -21,6 +21,7 @@ const envSchema = z.object({
   AWS_REGION: z.string().min(1, { message: 'AWS_REGION 不能为空' }),
   AWS_S3_BUCKET_NAME: z.string().min(1, { message: 'AWS_S3_BUCKET_NAME 不能为空' }),
   AWS_S3_UPLOAD_PREFIX: z.string().default('uploads/'),
+  CLOUD_FLARE_MAIL_WORKER_URL: z.url({ message: 'CLOUD_FLARE_MAIL_WORKER_URL must be a valid URL' }),
 });
 
 // 导出类型

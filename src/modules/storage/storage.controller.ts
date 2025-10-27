@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiConsumes,
   ApiOperation,
@@ -26,7 +27,8 @@ import {
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { StorachaStorageService } from './storage.service';
 
-@ApiTags('文件上传')
+@ApiTags('文件存储')
+
 @UseGuards(JwtAuthGuard)
 @Controller('storage')
 export class StorageController {

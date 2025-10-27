@@ -95,6 +95,39 @@ ETHEREUM_RPC_URL=https://mainnet.infura.io/v3/your_project_id
 
 # NFT证书合约配置
 NFT_CERTIFICATE_CONTRACT=0x... # NFT证书合约地址
+
+# AWS S3 配置（可选，用于文件上传）
+AWS_ACCESS_KEY_ID=your_access_key_id
+AWS_SECRET_ACCESS_KEY=your_secret_access_key
+AWS_REGION=ap-southeast-1
+AWS_S3_BUCKET_NAME=your-bucket-name
+```
+
+### S3 CORS 配置（可选）
+
+如果您使用 AWS S3 存储文件（头像、课程封面、视频等），需要配置 bucket 的 CORS 策略以支持前端直接上传。
+
+**⚠️ 重要**: 未配置 CORS 会导致前端上传文件时出现跨域错误！
+
+如果您使用 AWS S3，需要配置 CORS：
+1. 登录 AWS S3 控制台
+2. 选择您的 bucket
+3. 进入 "Permissions" → "Cross-origin resource sharing (CORS)"
+4. 添加以下配置：
+
+```json
+[
+  {
+    "AllowedHeaders": ["*"],
+    "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+    "AllowedOrigins": [
+      "http://localhost:3000",
+      "https://your-production-domain.com"
+    ],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
 ```
 
 ### 如果想使用docker
@@ -117,12 +150,16 @@ pnpm run start:prod
 
 ### 部署说明
 
-项目使用Supabase作为数据库服务：
+项目支持多种部署方式：
 
-1. **Supabase部署**：使用Supabase作为后端服务，支持自动扩展和全球CDN
-2. **Docker部署**：使用Docker Compose进行容器化部署（仅用于PostgreSQL等辅助服务）
-3. **传统服务器部署**：在Linux/Windows服务器上直接运行
-4. **云服务部署**：支持各大云服务商的标准部署方式
+1. **Docker 部署**（推荐）：使用 Docker Compose 进行容器化部署
+2. **传统服务器部署**：在 Linux/Windows 服务器上直接运行
+
+| 月请求量 | 平均响应时间 | 内存配置 | 预估费用 |
+|---------|------------|---------|---------|
+| 10万    | 200ms      | 1024MB  | 免费    |
+| 100万   | 200ms      | 1024MB  | ~$3.5   |
+| 1000万  | 200ms      | 1024MB  | ~$35    |
 
 #### Supabase部署优势
 
@@ -383,6 +420,20 @@ git commit -m "your message"
 - 所有修改的文件都会在 commit 前自动格式化
 
 ## 更新日志
+
+### v1.7.0 (2025-10-26)
+
+- ✅ 优化用户信息查询功能
+- ✅ 添加讲师评分计算（基于创建课程的平均评分）
+- ✅ 添加课程购买人数统计
+- ✅ 增强 `getUserById` 方法，返回用户的讲师评分和每个课程的购买人数
+- ✅ 改善代码注释和文档
+
+### v1.6.0 (2025-10-26)
+
+- ✅ 移除所有 AWS Lambda/Serverless 部署相关代码
+- ✅ 简化为传统服务器部署方案
+- ✅ 优化项目结构，去除不必要的复杂配置
 
 ### v1.4.0 (2024-01-15)
 

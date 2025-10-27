@@ -8,16 +8,9 @@ import {
   IsString,
   IsUrl,
 } from 'class-validator';
-import { COURSE_DIFFICULTY, IS_FREE } from 'src/config/constant';
+import { COURSE_DIFFICULTY, COURSE_STATUS, IS_FREE } from 'src/config/constant';
 
 export class CreateCourseDto {
-  @ApiProperty({
-    description: '创建者钱包地址',
-    example: '0x1234567890123456789012345678901234567890',
-  })
-  @IsNotEmpty({ message: '钱包地址不能为空' })
-  walletAddress: string;
-
   @ApiProperty({
     description: '课程标题',
     example: 'Web3区块链开发入门',
@@ -41,7 +34,7 @@ export class CreateCourseDto {
   })
   @IsOptional()
   @IsUrl({}, { message: '课程封面必须是有效的URL' })
-  cover?: string;
+  coverUrl?: string;
 
   @ApiProperty({
     description: '课程分类',
@@ -59,7 +52,7 @@ export class CreateCourseDto {
   })
   @IsNotEmpty({ message: '课程难度不能为空' })
   @IsEnum(Object.values(COURSE_DIFFICULTY), {
-    message: '课程难度必须是beginner、intermediate或advanced',
+    message: '课程难度必须是1、2或3',
   })
   difficulty: string;
 
@@ -71,25 +64,6 @@ export class CreateCourseDto {
   @IsOptional()
   @IsString({ message: 'YD币价格必须是字符串' })
   price?: string;
-
-  @ApiProperty({
-    description: '课程时长（分钟）',
-    example: 120,
-    required: false,
-  })
-  @IsOptional()
-  @IsNumber({}, { message: '课程时长必须是数字' })
-  duration?: number;
-
-  @ApiProperty({
-    description: '是否免费',
-    example: IS_FREE.FALSE,
-    required: false,
-  })
-  @IsOptional()
-  @IsString({ message: '是否免费必须是字符串' })
-  @IsEnum(Object.values(IS_FREE), { message: '是否免费必须是true或false' })
-  isFree?: string;
 
   @ApiProperty({
     description: '课程标签',
@@ -120,4 +94,16 @@ export class CreateCourseDto {
   @IsArray({ message: '前置要求必须是数组' })
   @IsString({ each: true, message: '前置要求数组中的每个元素必须是字符串' })
   prerequisites?: string[];
+
+  @ApiProperty({
+    description: '课程状态',
+    example: COURSE_STATUS.DRAFT,
+    enum: Object.values(COURSE_STATUS),
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(Object.values(COURSE_STATUS), {
+    message: '课程状态必须是1、2、3或4',
+  })
+  courseStatus?: string;
 }
