@@ -67,3 +67,4 @@ layer/
 
 dist
 .vercel
+.layer/

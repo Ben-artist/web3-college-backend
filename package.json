@@ -24,7 +24,7 @@
     "type-check": "tsc --noEmit",
     "prepare": "echo 'Skipping husky'",
     "pre-commit": "lint-staged",
-    "pre-push": "pnpm test && pnpm type-check",
+    "pre-push": "pnpm test && pnpm type-check"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^2.0.2",

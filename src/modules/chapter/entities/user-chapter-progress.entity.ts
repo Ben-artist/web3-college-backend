@@ -1,6 +1,6 @@
 // user-chapter-progress.entity.ts
 import { Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn, Unique } from 'typeorm';
-import { CommonEntity } from '../../../common/entities/common.entity';
+import { CommonEntity } from 'src/common/entities/common.entity';
 import { User } from '../../user/entities/user.entity';
 import { Chapter } from './chapter.entity';
 

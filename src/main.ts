@@ -10,7 +10,7 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
- 
+  
 /**
  * 应用程序启动入口
  * 配置全局中间件和管道
