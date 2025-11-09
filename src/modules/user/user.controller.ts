@@ -182,6 +182,14 @@ export class UserController {
     return this.userService.getUserFavoriteCourses(userId);
   }
 
+  // 获取用户收藏的课程（兼容前端路径）
+  @Get('favoriteCourses')
+  @ApiOperation({ summary: '获取用户收藏的课程' })
+  @ApiResponse({ status: 200, description: '获取成功' })
+  async getFavoriteCoursesAlias(@UserId() userId: number): Promise<any[]> {
+    return this.userService.getUserFavoriteCourses(userId);
+  }
+
   // 获取用户购买的课程
   @Get('purchases')
   @ApiOperation({ summary: '获取用户购买的课程' })

@@ -28,21 +28,31 @@ export class JwtAuthGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    if (isPublic) {
-      return true;
-    }
-
     const request = context.switchToHttp().getRequest();
     const token = this.extractToken(request);
+
+    // 如果是公共路由，即使没有 token 也允许访问
+    // 但如果有 token，仍然验证并提取用户信息（用于可选的身份识别）
+    if (isPublic) {
+      if (token) {
+        try {
+          const payload = await this.verifyToken(token);
+          // 将用户信息附加到请求对象（即使路由是公开的）
+          request.user = payload;
+        } catch {
+          // token 无效，但不阻止访问（因为是公共路由）
+          // request.user 保持为 undefined
+        }
+      }
+      return true;
+    }
 
     if (!token) {
       throw new UnauthorizedException('No token provided');
     }
 
     try {
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get<string>('JWT_SECRET'),
-      });
+      const payload = await this.verifyToken(token);
 
       // 将用户信息附加到请求对象
       request.user = payload;
@@ -51,6 +61,12 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     return true;
+  }
+
+  private async verifyToken(token: string): Promise<any> {
+    return await this.jwtService.verifyAsync(token, {
+      secret: this.configService.get<string>('JWT_SECRET'),
+    });
   }
 
   private extractToken(request: any): string | undefined {

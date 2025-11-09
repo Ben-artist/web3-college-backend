@@ -6,6 +6,7 @@ import { Chapter } from './entities/chapter.entity';
 import { CreateChapterDto } from './dto/create-chapter.dto';
 import { Course } from '../course/entities/course.entity';
 import { UpdateChapterDto } from './dto/update-chapter.dto';
+import { UserChapterProgress } from './entities/user-chapter-progress.entity';
 @Injectable()
 export class ChapterService {
   constructor(
@@ -15,6 +16,8 @@ export class ChapterService {
     private userRepository: Repository<User>,
     @InjectRepository(Course)
     private courseRepository: Repository<Course>,
+    @InjectRepository(UserChapterProgress)
+    private userChapterProgressRepository: Repository<UserChapterProgress>,
   ) { }
 
 
@@ -74,5 +77,19 @@ export class ChapterService {
       throw new NotFoundException(`章节ID ${chapterId} 不存在`);
     }
     return chapter;
+  }
+
+  /**
+   * 获取用户的观看历史记录
+   * @param userId 用户ID
+   * @param limit 返回记录数量限制
+   */
+  async getWatchHistory(userId: number, limit: number = 20): Promise<UserChapterProgress[]> {
+    return await this.userChapterProgressRepository.find({
+      where: { userId },
+      relations: ['chapter', 'chapter.course'],
+      order: { updatedAt: 'DESC' },
+      take: limit,
+    });
   }
 }

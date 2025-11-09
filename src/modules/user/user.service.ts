@@ -5,6 +5,7 @@ import type { Repository } from 'typeorm';
 import { plainToClassFromExist } from 'class-transformer';
 import { Course } from '../course/entities/course.entity';
 import { UserCourseProgress } from '../course/entities/user-course-progress.entity';
+import { UserCourseFavorite } from '../course/entities/user-course-favorite.entity';
 import { RegisterUserDto } from './dto/register-user.dto';
 import type { UpdateProfileDto } from './dto/update-profile.dto';
 import { User } from './entities/user.entity';
@@ -23,6 +24,8 @@ export class UserService {
     private userCourseProgressRepository: Repository<UserCourseProgress>,
     @InjectRepository(Course)
     private courseRepository: Repository<Course>,
+    @InjectRepository(UserCourseFavorite)
+    private userCourseFavoriteRepository: Repository<UserCourseFavorite>,
     private jwtService: JwtService
   ) {}
 
@@ -235,8 +238,14 @@ export class UserService {
    * 获取用户收藏的课程
    */
   async getUserFavoriteCourses(userId: number): Promise<any[]> {
-    // 这里需要实现收藏功能，暂时返回空数组
-    return [];
+    const favorites = await this.userCourseFavoriteRepository.find({
+      where: { userId },
+      relations: ['course'],
+      order: { createdAt: 'DESC' },
+    });
+    
+    // 返回课程信息数组
+    return favorites.map(fav => fav.course).filter(course => course !== null);
   }
 
   /**

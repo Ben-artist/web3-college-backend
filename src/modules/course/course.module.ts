@@ -5,6 +5,8 @@ import { CourseController } from './course.controller';
 import { CourseService } from './course.service';
 import { Course } from './entities/course.entity';
 import { UserCourseProgress } from './entities/user-course-progress.entity';
+import { UserCoursePurchase } from './entities/user-course-purchase.entity';
+import { UserCourseFavorite } from './entities/user-course-favorite.entity';
 import { Chapter } from '../chapter/entities/chapter.entity';
 
 /**
@@ -12,7 +14,7 @@ import { Chapter } from '../chapter/entities/chapter.entity';
  * 管理课程功能
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([Course, UserCourseProgress, User, Chapter])],
+  imports: [TypeOrmModule.forFeature([Course, UserCourseProgress, UserCoursePurchase, UserCourseFavorite, User, Chapter])],
   controllers: [CourseController],
   providers: [CourseService],
   exports: [CourseService], // 导出服务，供其他模块使用
